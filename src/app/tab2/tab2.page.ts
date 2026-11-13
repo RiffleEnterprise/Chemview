@@ -43,30 +43,51 @@ export class Tab2Page {
     ) {}
 
 
-  async ngOnInit(){
+  ngOnInit(){
+    this._createStage()
+  }
+
+  private _createStage(){
+    if(this.stage){
+      return
+    }
     this.stage = new NGL.Stage("threed",{ backgroundColor: "white" });
     this.stage.mouseControls.add("drag-right", NGL.MouseActions.rotateDrag);
     this.stage.mouseControls.add("drag-left+right", NGL.MouseActions.zoomDrag);
   }
 
   ionViewWillEnter(){
+    this._createStage()
     this.refreshView()
     this.checkIfFavorite()
-    console.log("test")
   }
 
   ionViewDidEnter(){
     this.presentToast()
   }
 
+  ionViewWillLeave(){
+    if(this.stage){
+      this.stage.dispose()
+      this.stage = null
+    }
+  }
+
   refreshView(){
+    if(!this.stage){
+      return
+    }
     this.stage.removeAllComponents()
-    console.log(this.currentChem.getName( ))
-    let self = this
-    this.stage.loadFile(this.pubchem.getSDFLink(this.currentChem.getName()),{ ext: "sdf" } ).then( function( comp ){
-      comp.addRepresentation( "ball+stick", { multipleBond: true } );
-      self.stage.autoView();
-    } );
+    this.stage.loadFile(this.pubchem.getSDFLink(this.currentChem.getName()),{ ext: "sdf" })
+      .then(comp => {
+        if(!this.stage){
+          comp.dispose()
+          return
+        }
+        comp.addRepresentation( "ball+stick", { multipleBond: true } );
+        this.stage.autoView();
+      })
+      .catch(err => console.error('Unable to load structure', err));
     this.stage.setSpin(false);
   }
 
@@ -107,8 +128,8 @@ export class Tab2Page {
   }
 
   //SDF
-  addFavorite(){
-    this.favoriteService.addFavorite(this.currentChem.getName())
+  async addFavorite(){
+    await this.favoriteService.addFavorite(this.currentChem.getName())
     this.favorite = true
   }
 
@@ -122,8 +143,8 @@ export class Tab2Page {
     }
   }
 
-  removeFavorite(){
-    this.favoriteService.removeFavorite(this.currentChem.getName())
+  async removeFavorite(){
+    await this.favoriteService.removeFavorite(this.currentChem.getName())
     this.favorite = false
   }
 

@@ -55,7 +55,8 @@ export class Tab1Page {
     this.settings.width = this.platform.width()
   }
 
-  ionViewWillEnter(){
+  async ionViewWillEnter(){
+    await this.favoriteService.whenReady()
     this.checkIfFavorite()
     this.refreshView()
   }
@@ -113,8 +114,8 @@ export class Tab1Page {
     this.checkIfFavorite()
   }
 
-  addFavorite(){
-    this.favoriteService.addFavorite(this.currentChem.getName())
+  async addFavorite(){
+    await this.favoriteService.addFavorite(this.currentChem.getName())
     this.favorite = true
   }
 
@@ -128,8 +129,8 @@ export class Tab1Page {
     }
   }
 
-  removeFavorite(){
-    this.favoriteService.removeFavorite(this.currentChem.getName())
+  async removeFavorite(){
+    await this.favoriteService.removeFavorite(this.currentChem.getName())
     this.favorite = false
   }
 
