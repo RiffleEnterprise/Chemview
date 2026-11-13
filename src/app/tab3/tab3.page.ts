@@ -11,7 +11,7 @@ import { Platform } from '@ionic/angular';
   styleUrls: ['tab3.page.scss']
 })
 export class Tab3Page {
-  favorites=[]
+  favorites:string[] = []
   empty:boolean = true
 
   //special for admob
@@ -54,28 +54,28 @@ export class Tab3Page {
     });
   }
 
-  ionViewWillEnter(){
+  async ionViewWillEnter(){
     if(this.admobSetup){
-      this.admobBanner.show()
+      this.admobBanner?.show()
     }
+    await this.favoriteService.whenReady()
     this.favorites = this.favoriteService.getFavorites()
     this.empty = this.favorites.length == 0
   }
 
-  removeFavorite(favorite){
-    console.log(favorite)
-    this.favoriteService.removeFavorite(favorite)
+  async removeFavorite(favorite: string){
+    await this.favoriteService.removeFavorite(favorite)
     this.favorites = this.favoriteService.getFavorites()
+    this.empty = this.favorites.length == 0
   }
 
-  load(favorite){
-    this.currentChemService.setName(favorite)
+  async load(favorite: string){
+    await this.currentChemService.setName(favorite)
     this.router.navigate(['tabs/tab1'])
   }
-  
+
   ionViewWillLeave(){
-    this.admobBanner.hide()
-    console.log("leaving")
+    this.admobBanner?.hide()
   }
 
 }
