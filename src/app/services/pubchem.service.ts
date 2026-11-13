@@ -19,7 +19,7 @@ export class PubchemService {
     return await this.http.get(`${this.baseUrl}/${encoded}/json`).toPromise();
   }
 
-  private getProperty(compound: any, label: string, names: string[] = []): string | undefined {
+  private getProperty(compound: any, label: string, names: string[] = []): string {
     const props: PubChemProperty[] = compound?.PC_Compounds?.[0]?.props ?? [];
     for (const name of names) {
       const match = props.find(prop => prop.urn?.label === label && prop.urn?.name === name);
@@ -27,7 +27,11 @@ export class PubchemService {
         return match.value.sval;
       }
     }
-    return props.find(prop => prop.urn?.label === label)?.value?.sval;
+    const fallback = props.find(prop => prop.urn?.label === label);
+    if (fallback?.value?.sval === undefined) {
+      throw new Error(`PubChem response is missing ${label}`);
+    }
+    return fallback.value.sval;
   }
 
   async getSmiles(query: string) {
