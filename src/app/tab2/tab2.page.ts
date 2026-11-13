@@ -1,21 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { PubchemService } from '../services/pubchem.service';
 import { CurrentChemService } from '../services/current-chem.service';
 import { FavoriteService } from '../services/favorite.service';
 import { ImageSaverService } from '../services/image-saver.service';
 import { ToastController } from '@ionic/angular';
 import { AlertController } from '@ionic/angular';
+import { StructureExportService } from '../services/structure-export.service';
 const NGL = require('ngl/dist/ngl.js')
-
-
-class TouchListener{
-  constructor(private text:string){
-
-  }
-  apply(){
-    console.log(this.text)
-  }
-}
 
 @Component({
   selector: 'app-tab2',
@@ -33,41 +24,109 @@ export class Tab2Page {
 
   favorite:boolean = false
 
+  @ViewChild('arViewer') arViewer: any
+  arUrl: string | null = null
+  arLoading = false
+  arError = ''
+
   constructor(
     private toastController: ToastController,
     private pubchem: PubchemService,
     private currentChem:CurrentChemService,
     private favoriteService: FavoriteService,
     private imageSaverService: ImageSaverService,
-    private alertController: AlertController
+    private alertController: AlertController,
+    private structureExport: StructureExportService
     ) {}
 
 
-  async ngOnInit(){
+  ngOnInit(){
+    this._createStage()
+  }
+
+  private _createStage(){
+    if(this.stage){
+      return
+    }
     this.stage = new NGL.Stage("threed",{ backgroundColor: "white" });
     this.stage.mouseControls.add("drag-right", NGL.MouseActions.rotateDrag);
     this.stage.mouseControls.add("drag-left+right", NGL.MouseActions.zoomDrag);
   }
 
   ionViewWillEnter(){
+    this._createStage()
     this.refreshView()
     this.checkIfFavorite()
-    console.log("test")
   }
 
   ionViewDidEnter(){
     this.presentToast()
   }
 
+  ionViewWillLeave(){
+    if(this.stage){
+      this.stage.dispose()
+      this.stage = null
+    }
+  }
+
   refreshView(){
+    if(!this.stage){
+      return
+    }
     this.stage.removeAllComponents()
-    console.log(this.currentChem.getName( ))
-    let self = this
-    this.stage.loadFile(this.pubchem.getSDFLink(this.currentChem.getName()),{ ext: "sdf" } ).then( function( comp ){
-      comp.addRepresentation( "ball+stick", { multipleBond: true } );
-      self.stage.autoView();
-    } );
+    this.stage.loadFile(this.pubchem.getSDFLink(this.currentChem.getName()),{ ext: "sdf" })
+      .then(comp => {
+        if(!this.stage){
+          comp.dispose()
+          return
+        }
+        comp.addRepresentation( "ball+stick", { multipleBond: true } );
+        this.stage.autoView();
+      })
+      .catch(err => console.error('Unable to load structure', err));
     this.stage.setSpin(false);
+  }
+
+  async openAr(){
+    const name = this.currentChem.getName()
+    if(!name){
+      return
+    }
+    this.arLoading = true
+    this.arError = ''
+    try{
+      this.revokeArUrl()
+      this.arUrl = await this.structureExport.moleculeObjectUrl(name)
+    }
+    catch{
+      this.arError = 'Could not build a 3D model for AR.'
+    }
+    finally{
+      this.arLoading = false
+    }
+  }
+
+  closeAr(){
+    this.revokeArUrl()
+    this.arUrl = null
+  }
+
+  async captureAr(){
+    if(!this.arViewer || !this.arViewer.toDataURL){
+      return
+    }
+    const dataUrl = await this.arViewer.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.href = dataUrl
+    link.download = 'chemview-ar.png'
+    link.click()
+  }
+
+  private revokeArUrl(){
+    if(this.arUrl){
+      URL.revokeObjectURL(this.arUrl)
+    }
   }
 
   async search(event,first:boolean){
@@ -107,8 +166,8 @@ export class Tab2Page {
   }
 
   //SDF
-  addFavorite(){
-    this.favoriteService.addFavorite(this.currentChem.getName())
+  async addFavorite(){
+    await this.favoriteService.addFavorite(this.currentChem.getName())
     this.favorite = true
   }
 
@@ -122,8 +181,8 @@ export class Tab2Page {
     }
   }
 
-  removeFavorite(){
-    this.favoriteService.removeFavorite(this.currentChem.getName())
+  async removeFavorite(){
+    await this.favoriteService.removeFavorite(this.currentChem.getName())
     this.favorite = false
   }
 

@@ -1,38 +1,55 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+
+interface PubChemProperty {
+  urn: { label?: string; name?: string };
+  value: { sval?: string };
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class PubchemService {
+  private readonly baseUrl = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name';
 
-  constructor(private http:HttpClient) { }
+  constructor(private http: HttpClient) { }
 
-
-  async getSmiles(query:string){
-    //Gets the canonical
-    let chemJson = await this.http.get('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'+query+'/json').toPromise()
-    let smiles = await chemJson["PC_Compounds"][0].props[18].value.sval
-    console.log(chemJson)
-    return await smiles
+  private async getCompound(query: string): Promise<any> {
+    const encoded = encodeURIComponent(query.trim());
+    return await this.http.get(`${this.baseUrl}/${encoded}/json`).toPromise();
   }
 
-  async getSmilesIsomeric(query:string){
-    //Gets the isomeric smile
-    let chemJson = await this.http.get('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'+query+'/json').toPromise()
-    let smiles = await chemJson["PC_Compounds"][0].props[19].value.sval
-    console.log(smiles)
-    return await smiles
+  private getProperty(compound: any, label: string, names: string[] = []): string | undefined {
+    const props: PubChemProperty[] = compound?.PC_Compounds?.[0]?.props ?? [];
+    for (const name of names) {
+      const match = props.find(prop => prop.urn?.label === label && prop.urn?.name === name);
+      if (match?.value?.sval !== undefined) {
+        return match.value.sval;
+      }
+    }
+    return props.find(prop => prop.urn?.label === label)?.value?.sval;
   }
 
-  async getMolecularFormula(query:string){
-    let chemJson = await this.http.get('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'+query+'/json').toPromise()
-    let formula = await chemJson["PC_Compounds"][0].props[16].value.sval
-    console.log(formula)
-    return await formula
+  async getSmiles(query: string) {
+    const compound = await this.getCompound(query);
+    return this.getProperty(compound, 'SMILES', ['Connectivity', 'Canonical']);
   }
 
-  getSDFLink(query:string){
-    return "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"+query+"/sdf"
+  async getSmilesIsomeric(query: string) {
+    const compound = await this.getCompound(query);
+    return this.getProperty(compound, 'SMILES', ['Absolute', 'Isomeric']);
+  }
 
+  async getMolecularFormula(query: string) {
+    const compound = await this.getCompound(query);
+    return this.getProperty(compound, 'Molecular Formula', ['Molecular Formula']);
+  }
+
+  getSDFLink(query: string) {
+    return `${this.baseUrl}/${encodeURIComponent(query.trim())}/sdf`;
+  }
+
+  get3DSDFLink(query: string) {
+    return `${this.baseUrl}/${encodeURIComponent(query.trim())}/SDF?record_type=3d`;
   }
 }
