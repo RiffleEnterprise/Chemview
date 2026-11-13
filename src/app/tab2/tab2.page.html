@@ -15,17 +15,19 @@
       </ion-col>
 
     </ion-row>
-    <!-- Keeping this here till we can get image saving working-->
-    <!-- <ion-row>
-    <ion-col size = "10">
-        <!-- empty for spacing
-    </ion-col>
-    <ion-col size="2">
-        <ion-button (click)="saveCanvas()" color = "tertiary" >
-            <ion-icon  name="download-sharp"></ion-icon>
-        </ion-button>  
-    </ion-col>
-    </ion-row> -->
+    <ion-row>
+        <ion-col size="10"></ion-col>
+        <ion-col size="2">
+            <ion-button (click)="openAr()" color="tertiary" [disabled]="arLoading">
+                <ion-icon name="cube-outline"></ion-icon>
+            </ion-button>
+        </ion-col>
+    </ion-row>
+    <ion-row *ngIf="arLoading || arError">
+        <ion-col size="12">
+            <ion-text color="medium">{{ arLoading ? 'Building AR model...' : arError }}</ion-text>
+        </ion-col>
+    </ion-row>
 </ion-grid>
 
 
@@ -40,7 +42,15 @@
 
 
 <!-- NGL Viewer -->
-<div id="threed"></div>  
+<div id="threed"></div>
+
+<div class="ar-overlay" *ngIf="arUrl">
+    <model-viewer #arViewer [src]="arUrl" ar camera-controls auto-rotate shadow-intensity="1"></model-viewer>
+    <div class="ar-actions">
+        <ion-button (click)="captureAr()" color="tertiary">Capture</ion-button>
+        <ion-button (click)="closeAr()" color="medium">Close</ion-button>
+    </div>
+</div>
 
 
 

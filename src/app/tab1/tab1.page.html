@@ -14,6 +14,17 @@
                 <ion-icon  name="heart-sharp"></ion-icon>
             </ion-button>       
         </ion-col>
+        <ion-col size="1">
+            <ion-button (click)="scanInput.click()" color="tertiary" [disabled]="scanning">
+                <ion-icon name="camera-outline"></ion-icon>
+            </ion-button>
+        </ion-col>
+    </ion-row>
+    <input #scanInput type="file" accept="image/*" capture="environment" (change)="onScanFile($event)" style="display:none" />
+    <ion-row *ngIf="scanning || scanError">
+        <ion-col size="12">
+            <ion-text color="medium">{{ scanning ? 'Reading label...' : scanError }}</ion-text>
+        </ion-col>
     </ion-row>
     <ion-row>
         <ion-col size = "10">

@@ -6,6 +6,7 @@ import { PubchemService } from '../services/pubchem.service';
 import { CurrentChemService } from '../services/current-chem.service';
 import { FavoriteService } from '../services/favorite.service';
 import { ImageSaverService } from '../services/image-saver.service';
+import { StructureExportService } from '../services/structure-export.service';
 
 describe('Tab2Page', () => {
   let component: Tab2Page;
@@ -35,7 +36,8 @@ describe('Tab2Page', () => {
             removeFavorite: () => Promise.resolve()
           }
         },
-        { provide: ImageSaverService, useValue: {} }
+        { provide: ImageSaverService, useValue: {} },
+        { provide: StructureExportService, useValue: { moleculeObjectUrl: () => Promise.resolve('blob:test') } }
       ]
     });
 

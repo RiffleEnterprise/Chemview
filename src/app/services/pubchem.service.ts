@@ -48,4 +48,8 @@ export class PubchemService {
   getSDFLink(query: string) {
     return `${this.baseUrl}/${encodeURIComponent(query.trim())}/sdf`;
   }
+
+  get3DSDFLink(query: string) {
+    return `${this.baseUrl}/${encodeURIComponent(query.trim())}/SDF?record_type=3d`;
+  }
 }
