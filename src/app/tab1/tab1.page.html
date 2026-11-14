@@ -1,62 +1,39 @@
-
 <!-- search bar -->
-<ion-grid id="topUI">
-    <ion-row>
-        <ion-col size="10">
-            <ion-searchbar *ngIf="popSearch" placeholder="Chemical Name" color = "dark" animated [(ngModel)]="searchQuery" 
+<div id="topUI">
+    <div class="ui-row">
+        <ion-searchbar *ngIf="popSearch" placeholder="Chemical Name" color="dark" animated [(ngModel)]="searchQuery"
             (search)="search($event,true)" id="searchBar"></ion-searchbar>
-        </ion-col>
-        <ion-col size="1">
-            <ion-button *ngIf="!favorite" (click)="addFavorite()" color = "tertiary" id="favorite">
-                <ion-icon  name="heart-outline"></ion-icon>
-            </ion-button>
-            <ion-button *ngIf="favorite" (click)="removeFavorite()" color = "tertiary"  id="favorite">
-                <ion-icon  name="heart-sharp"></ion-icon>
-            </ion-button>       
-        </ion-col>
-        <ion-col size="1">
-            <ion-button (click)="scanInput.click()" color="tertiary" [disabled]="scanning">
-                <ion-icon name="camera-outline"></ion-icon>
-            </ion-button>
-        </ion-col>
-    </ion-row>
+        <ion-button *ngIf="!favorite" (click)="addFavorite()" color="tertiary" id="favorite" class="ui-icon-button"
+            aria-label="Add favorite">
+            <ion-icon name="heart-outline"></ion-icon>
+        </ion-button>
+        <ion-button *ngIf="favorite" (click)="removeFavorite()" color="tertiary" id="favorite" class="ui-icon-button"
+            aria-label="Remove favorite">
+            <ion-icon name="heart-sharp"></ion-icon>
+        </ion-button>
+        <ion-button (click)="scanInput.click()" color="tertiary" class="ui-icon-button" [disabled]="scanning"
+            aria-label="Scan label">
+            <ion-icon name="camera-outline"></ion-icon>
+        </ion-button>
+    </div>
     <input #scanInput type="file" accept="image/*" capture="environment" (change)="onScanFile($event)" style="display:none" />
-    <ion-row *ngIf="scanning || scanError">
-        <ion-col size="12">
-            <ion-text color="medium">{{ scanning ? 'Reading label...' : scanError }}</ion-text>
-        </ion-col>
-    </ion-row>
-    <ion-row>
-        <ion-col size = "10">
-            <!-- empty for spacing -->
-        </ion-col>
-        <!-- <ion-col size="2">
-            <ion-button (click)="saveCanvas()" color = "tertiary" >
-                <ion-icon  name="download-sharp"></ion-icon>
-            </ion-button>  
-        </ion-col> -->
-        <ion-col size="2">
-            <ion-button (click)="showSettings()" color = "tertiary" >
-                <ion-icon  name="settings-sharp"></ion-icon>
-            </ion-button>  
-        </ion-col>
-    </ion-row>
-</ion-grid>
+    <div class="ui-row ui-row--end">
+        <ion-button (click)="showSettings()" color="tertiary" class="ui-icon-button" aria-label="Settings">
+            <ion-icon name="settings-sharp"></ion-icon>
+        </ion-button>
+    </div>
+    <div class="ui-status" *ngIf="scanning || scanError">
+        {{ scanning ? 'Reading label...' : scanError }}
+    </div>
+</div>
 
 <!-- Bottom information  -->
-<ion-grid id="bottomUI">
-    <ion-row>
-        <ion-col size = "12">
-            {{this.currentChem.getName() + " " + this.currentChem.getFormula()}}
-        </ion-col>
-    </ion-row>
-</ion-grid>
+<div id="bottomUI">
+    {{this.currentChem.getName() + " " + this.currentChem.getFormula()}}
+</div>
 
 <!-- favorite button -->
 
 <!-- smiles drawer view -->
-<canvas id="twod" style="width:100vw; height:100vh;"></canvas>  
+<canvas id="twod" style="width:100vw; height:100vh;"></canvas>
 <!-- This below has pop search to fix the error where the web view doesn't unfocus after a search so the ios keyboard never goes away -->
-
-
-

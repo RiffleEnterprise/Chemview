@@ -1,44 +1,33 @@
 <!-- Search Bar -->
-<ion-grid id="topUI">
-    <ion-row>
-        <ion-col size="10">
-          <ion-searchbar *ngIf="popSearch" placeholder="Chemical Name" color = "dark" animated [(ngModel)]="searchQuery" 
-          (search)="search($event,true)" id="searchBar"></ion-searchbar>
-      </ion-col>
-      <ion-col size="1">
-          <ion-button *ngIf="!favorite" (click)="addFavorite()" color = "tertiary" id="favorite">
-              <ion-icon  name="heart-outline"></ion-icon>
-          </ion-button>
-          <ion-button *ngIf="favorite" (click)="removeFavorite()" color = "tertiary"  id="favorite">
-              <ion-icon  name="heart-sharp"></ion-icon>
-          </ion-button>       
-      </ion-col>
-
-    </ion-row>
-    <ion-row>
-        <ion-col size="10"></ion-col>
-        <ion-col size="2">
-            <ion-button (click)="openAr()" color="tertiary" [disabled]="arLoading">
-                <ion-icon name="cube-outline"></ion-icon>
-            </ion-button>
-        </ion-col>
-    </ion-row>
-    <ion-row *ngIf="arLoading || arError">
-        <ion-col size="12">
-            <ion-text color="medium">{{ arLoading ? 'Building AR model...' : arError }}</ion-text>
-        </ion-col>
-    </ion-row>
-</ion-grid>
+<div id="topUI">
+    <div class="ui-row">
+        <ion-searchbar *ngIf="popSearch" placeholder="Chemical Name" color="dark" animated [(ngModel)]="searchQuery"
+            (search)="search($event,true)" id="searchBar"></ion-searchbar>
+        <ion-button *ngIf="!favorite" (click)="addFavorite()" color="tertiary" id="favorite" class="ui-icon-button"
+            aria-label="Add favorite">
+            <ion-icon name="heart-outline"></ion-icon>
+        </ion-button>
+        <ion-button *ngIf="favorite" (click)="removeFavorite()" color="tertiary" id="favorite" class="ui-icon-button"
+            aria-label="Remove favorite">
+            <ion-icon name="heart-sharp"></ion-icon>
+        </ion-button>
+    </div>
+    <div class="ui-row ui-row--end">
+        <ion-button (click)="openAr()" color="tertiary" class="ui-icon-button" [disabled]="arLoading"
+            aria-label="Open AR view">
+            <ion-icon name="cube-outline"></ion-icon>
+        </ion-button>
+    </div>
+    <div class="ui-status" *ngIf="arLoading || arError">
+        {{ arLoading ? 'Building AR model...' : arError }}
+    </div>
+</div>
 
 
 <!-- Bottom information  -->
-<ion-grid id="bottomUI">
-    <ion-row>
-        <ion-col size = "12">
-            {{this.currentChem.getName() + " " + this.currentChem.getFormula()}}
-        </ion-col>
-    </ion-row>
-</ion-grid>
+<div id="bottomUI">
+    {{this.currentChem.getName() + " " + this.currentChem.getFormula()}}
+</div>
 
 
 <!-- NGL Viewer -->
@@ -47,10 +36,7 @@
 <div class="ar-overlay" *ngIf="arUrl">
     <model-viewer #arViewer [src]="arUrl" ar camera-controls auto-rotate shadow-intensity="1"></model-viewer>
     <div class="ar-actions">
-        <ion-button (click)="captureAr()" color="tertiary">Capture</ion-button>
-        <ion-button (click)="closeAr()" color="medium">Close</ion-button>
+        <ion-button (click)="captureAr()" color="tertiary" class="ar-action">Capture</ion-button>
+        <ion-button (click)="closeAr()" color="medium" class="ar-action">Close</ion-button>
     </div>
 </div>
-
-
-
