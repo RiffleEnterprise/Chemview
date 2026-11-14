@@ -34,6 +34,9 @@ export class Tab1Page {
   initalized:boolean = false
   scanning = false
   scanError = ''
+  searching = false
+  private lastSearchQuery = ''
+  private lastSearchAt = 0
   constructor(private platform: Platform,
     private pubchem: PubchemService, 
     public currentChem:CurrentChemService,
@@ -82,18 +85,29 @@ export class Tab1Page {
   }
 
   async search(event,first:boolean){
-    console.log("term is:"+ this.searchQuery)
+    const query = (this.searchQuery || '').trim()
+    if(!query || this.searching){
+      return
+    }
+    const now = Date.now()
+    if(first && query.toLowerCase() === this.lastSearchQuery && now - this.lastSearchAt < 800){
+      return
+    }
+    this.lastSearchQuery = query.toLowerCase()
+    this.lastSearchAt = now
+    this.searching = true
     let pastName = this.currentChem.getName()
-    console.log("past name: " + pastName)
     try{
-      await this.currentChem.setName(this.searchQuery)
+      await this.currentChem.setName(query)
     }
     catch{
       if(first){
       await this.currentChem.setName(pastName)
+      this.searching = false
       setTimeout(() => {this.search(event,false)}, 500);
       }
       else{
+      this.searching = false
       this.presentNoChemical()
       await this.currentChem.setName(pastName)
       }
@@ -113,6 +127,7 @@ export class Tab1Page {
         this.currentChem.setName(pastName)
       }
     }
+    this.searching = false
     this._popSearch()
     this.checkIfFavorite()
   }
