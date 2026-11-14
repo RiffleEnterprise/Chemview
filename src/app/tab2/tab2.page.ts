@@ -133,7 +133,9 @@ export class Tab2Page {
   }
 
   async search(event,first:boolean){
-    const query = (this.searchQuery || '').trim()
+    const eventValue = event && event.detail && typeof event.detail.value === 'string' ? event.detail.value : null
+    const query = (eventValue !== null ? eventValue : (this.searchQuery || '')).trim()
+    this.searchQuery = query
     if(!query || this.searching){
       return
     }
