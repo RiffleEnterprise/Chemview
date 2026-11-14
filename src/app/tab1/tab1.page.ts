@@ -10,7 +10,7 @@ import { Settings,DefaultSettings } from '../models/settings';
 import { SettingsService } from '../services/settings.service';
 import { ImageSaverService } from '../services/image-saver.service';
 import { AlertController } from '@ionic/angular';
-import { ThisReceiver } from '@angular/compiler';
+import { ScanService, extractChemicalCandidates } from '../services/scan.service';
 
 
 
@@ -32,6 +32,11 @@ export class Tab1Page {
   favorite:boolean = false 
   settings:Settings = new DefaultSettings
   initalized:boolean = false
+  scanning = false
+  scanError = ''
+  searching = false
+  private lastSearchQuery = ''
+  private lastSearchAt = 0
   constructor(private platform: Platform,
     private pubchem: PubchemService, 
     public currentChem:CurrentChemService,
@@ -39,7 +44,8 @@ export class Tab1Page {
     public modalController: ModalController,
     private imageSaverService:ImageSaverService,
     private settingsService:SettingsService,
-    private alertController:AlertController,) 
+    private alertController:AlertController,
+    private scanService:ScanService) 
   {
   }
 
@@ -55,7 +61,8 @@ export class Tab1Page {
     this.settings.width = this.platform.width()
   }
 
-  ionViewWillEnter(){
+  async ionViewWillEnter(){
+    await this.favoriteService.whenReady()
     this.checkIfFavorite()
     this.refreshView()
   }
@@ -78,18 +85,31 @@ export class Tab1Page {
   }
 
   async search(event,first:boolean){
-    console.log("term is:"+ this.searchQuery)
+    const eventValue = event && event.detail && typeof event.detail.value === 'string' ? event.detail.value : null
+    const query = (eventValue !== null ? eventValue : (this.searchQuery || '')).trim()
+    this.searchQuery = query
+    if(!query || this.searching){
+      return
+    }
+    const now = Date.now()
+    if(first && query.toLowerCase() === this.lastSearchQuery && now - this.lastSearchAt < 800){
+      return
+    }
+    this.lastSearchQuery = query.toLowerCase()
+    this.lastSearchAt = now
+    this.searching = true
     let pastName = this.currentChem.getName()
-    console.log("past name: " + pastName)
     try{
-      await this.currentChem.setName(this.searchQuery)
+      await this.currentChem.setName(query)
     }
     catch{
       if(first){
       await this.currentChem.setName(pastName)
+      this.searching = false
       setTimeout(() => {this.search(event,false)}, 500);
       }
       else{
+      this.searching = false
       this.presentNoChemical()
       await this.currentChem.setName(pastName)
       }
@@ -109,12 +129,13 @@ export class Tab1Page {
         this.currentChem.setName(pastName)
       }
     }
+    this.searching = false
     this._popSearch()
     this.checkIfFavorite()
   }
 
-  addFavorite(){
-    this.favoriteService.addFavorite(this.currentChem.getName())
+  async addFavorite(){
+    await this.favoriteService.addFavorite(this.currentChem.getName())
     this.favorite = true
   }
 
@@ -128,8 +149,8 @@ export class Tab1Page {
     }
   }
 
-  removeFavorite(){
-    this.favoriteService.removeFavorite(this.currentChem.getName())
+  async removeFavorite(){
+    await this.favoriteService.removeFavorite(this.currentChem.getName())
     this.favorite = false
   }
 
@@ -150,6 +171,49 @@ export class Tab1Page {
   saveCanvas(){
     let canvas = document.getElementById("twod")
     //this.imageSaverService.saveImage(canvas)
+  }
+
+  async onScanFile(event: Event){
+    const input = event.target as HTMLInputElement
+    const file = input.files && input.files[0]
+    if(!file){
+      return
+    }
+    this.scanning = true
+    this.scanError = ''
+    try{
+      const text = await this.scanService.recognize(file)
+      const candidates = extractChemicalCandidates(text)
+      if(!candidates.length){
+        this.scanError = 'No chemical name found in that image.'
+        return
+      }
+      for(const candidate of candidates){
+        const previous = this.currentChem.getName()
+        try{
+          await this.currentChem.setName(candidate)
+          this.searchQuery = candidate
+          this.refreshView()
+          this.checkIfFavorite()
+          return
+        }
+        catch{
+          try{
+            await this.currentChem.setName(previous)
+          }
+          catch{
+          }
+        }
+      }
+      this.scanError = 'No matching chemical found. Try another photo or type the name.'
+    }
+    catch{
+      this.scanError = 'Could not read that image. Try again or type the name.'
+    }
+    finally{
+      this.scanning = false
+      input.value = ''
+    }
   }
 
   _popSearch(){

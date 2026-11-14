@@ -4,9 +4,9 @@ import { PubchemService } from './pubchem.service';
   providedIn: 'root'
 })
 export class CurrentChemService {
-  
+
   name:string = "Methane";
-  formula:string = "C";
+  formula:string = "CH4";
 
   constructor(private pubchem:PubchemService) { }
 
@@ -23,15 +23,17 @@ export class CurrentChemService {
   }
 
   async setName(newName:string){
-    this.name = this._standardizeChemicalName(newName)
-    await this.setFormula()
+    const standardized = this._standardizeChemicalName(newName)
+    if(!standardized){
+      return
+    }
+    const formula = await this.pubchem.getMolecularFormula(standardized)
+    this.name = standardized
+    this.formula = formula || ''
   }
-  /**
-   * turns the chemical names from what ever input into all lowercase with capitcal first letters
-   */
+
   private _standardizeChemicalName(name:string){
-    let standardName = name.toLowerCase()
-    return standardName.charAt(0).toUpperCase() + standardName.slice(1)
+    return name.trim()
   }
-  
+
 }

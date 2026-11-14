@@ -1,0 +1,24 @@
+{
+  "name": "Chemview",
+  "short_name": "Chemview",
+  "description": "Mobile chemical structure visualizer",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1b1b2f",
+  "icons": [
+    {
+      "src": "assets/icon/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon/favicon.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    }
+  ]
+}

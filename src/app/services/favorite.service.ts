@@ -1,59 +1,57 @@
 import { Injectable } from '@angular/core';
 import { Storage } from '@ionic/storage-angular';
 
-/*
-the favorites is an array of strings being chemical names 
-TODO the strings can also be chemical formulas
-*/
 @Injectable({
   providedIn: 'root'
 })
 export class FavoriteService {
-  //our storage object
-  private _storage
+  private _storage: Storage | null = null;
+  private favorites: string[] = [];
+  private ready: Promise<void>;
 
-  favorites
-
-  constructor(private storage:Storage) { 
-    this.init()
+  constructor(private storage: Storage) {
+    this.ready = this.init();
   }
 
-  async init(){
-    const storage = await this.storage.create();
-    this._storage = storage;
-    this.loadData()
+  private async init() {
+    this._storage = await this.storage.create();
+    await this.loadData();
   }
 
-  async loadData(){
-    this.favorites = await this._storage.get('favorites')
-    if(this.favorites == null){
-      await this._storage.set('favorites',[])
-      this.favorites = []
+  private async loadData() {
+    if (!this._storage) {
+      return;
+    }
+    const stored = await this._storage.get('favorites');
+    this.favorites = Array.isArray(stored) ? stored : [];
+    if (!Array.isArray(stored)) {
+      await this._storage.set('favorites', this.favorites);
     }
   }
 
-  favoritesContains(favorite){
-    return (this.favorites.some(elm => {return JSON.stringify(elm) === JSON.stringify(favorite)}))
+  whenReady(): Promise<void> {
+    return this.ready;
   }
 
-  addFavorite(favorite){
+  getFavorites(): string[] {
+    return this.favorites;
+  }
 
-    if(!this.favorites.includes(favorite)){
-      this.favorites.push(favorite)
-      this._storage.set('favorites',this.favorites)
+  favoritesContains(favorite: string): boolean {
+    return this.favorites.includes(favorite);
+  }
+
+  async addFavorite(favorite: string) {
+    await this.ready;
+    if (!this.favorites.includes(favorite)) {
+      this.favorites.push(favorite);
+      await this._storage?.set('favorites', this.favorites);
     }
   }
 
-  removeFavorite(favorite){
-    if(this.favoritesContains(favorite)){
-      this.favorites = this.favorites.filter(function(el) { return el != favorite;});
-      }
-    this._storage.set('favorites',this.favorites)
+  async removeFavorite(favorite: string) {
+    await this.ready;
+    this.favorites = this.favorites.filter(el => el !== favorite);
+    await this._storage?.set('favorites', this.favorites);
   }
-
-  getFavorites(){
-    return this.favorites
-  }
-
-
 }
